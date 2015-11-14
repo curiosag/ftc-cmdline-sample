@@ -1,9 +1,10 @@
 package fusiontables;
 
 import com.google.api.client.util.DateTime;
+import com.google.common.base.Optional;
 
 import cg.common.core.SystemLogger;
-import interfeces.TableInfo;
+import interfacing.TableInfo;
 
 import java.io.IOException;
 import java.util.Date;
@@ -15,7 +16,8 @@ public class FusionTablesSampleRefactored {
 
   public static void main(String[] args) {
     try {
-      connector = new FusionTablesConnector(new SystemLogger());
+      Optional<AuthInfo> noAuth = Optional.absent(); 
+      connector = new FusionTablesConnector(new SystemLogger(), noAuth);
      
       listTables();
       
@@ -69,6 +71,8 @@ public class FusionTablesSampleRefactored {
       View.separator();
     }
   }
+  
+  
 
   private static void insertData(String tableId) throws IOException {
     String sql =

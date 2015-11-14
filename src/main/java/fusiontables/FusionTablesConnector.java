@@ -17,14 +17,18 @@ import com.google.api.services.fusiontables.FusiontablesScopes;
 import com.google.api.services.fusiontables.model.Column;
 import com.google.api.services.fusiontables.model.Sqlresponse;
 import com.google.api.services.fusiontables.model.Table;
+import com.google.common.base.Optional;
 
 import cg.common.check.Check;
 import cg.common.core.Logging;
-import interfeces.Connector;
-import interfeces.TableInfo;
+import interfacing.ColumnInfo;
+import interfacing.Connector;
+import interfacing.TableInfo;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,13 +53,27 @@ public class FusionTablesConnector implements Connector {
   private static final java.io.File DATA_STORE_DIR =
       new java.io.File(System.getProperty("user.home"), ".store/fusion_tables_sample");
 
-  public FusionTablesConnector(Logging logger) {
+  public FusionTablesConnector(Logging logger, Optional<AuthInfo> authInfo) {
+    Check.notNull(authInfo);
     Check.notNull(logger);
-    
+
+    String authInfoJSon =
+        "{\"installed\":{\"client_id\":\"%s\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://accounts.google.com/o/oauth2/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"%s\",\"redirect_uris\":[\"urn:ietf:wg:oauth:2.0:oob\",\"http://localhost\"]}}";
     try {
+
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
       dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
-      Credential credential = authorize();
+
+      Reader authStream;
+      if (authInfo.isPresent())
+        authStream = new StringReader(
+            String.format(authInfoJSon, authInfo.get().clientId, authInfo.get().clientSecret));
+      else {
+        String path = "/client_secrets.json";
+        authStream = new InputStreamReader(FusionTablesSample.class.getResourceAsStream(path));
+      }
+
+      Credential credential = authorize(authStream);
 
       fusiontables = new Fusiontables.Builder(httpTransport, JSON_FACTORY, credential)
           .setApplicationName(APPLICATION_NAME).build();
@@ -72,11 +90,9 @@ public class FusionTablesConnector implements Connector {
     if (logger != null) logger.Info(msg);
   }
 
-  private Credential authorize() throws Exception {
-    String path = "/client_secrets.json";
+  private Credential authorize(Reader r) throws Exception {
 
-    GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
-        new InputStreamReader(FusionTablesSample.class.getResourceAsStream(path)));
+    GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, r);
 
     if (clientSecrets.getDetails().getClientId().startsWith("Enter")
         || clientSecrets.getDetails().getClientSecret().startsWith("Enter ")) {
@@ -98,12 +114,24 @@ public class FusionTablesConnector implements Connector {
 
     try {
       for (Table t : fusiontables.table().list().execute().getItems())
-        result.add(new TableInfo(t.getName(), t.getTableId(), t.getDescription()));
+        result.add(new TableInfo(t.getName(), t.getTableId(), t.getDescription(), getColumns(t)));
 
     } catch (IOException e) {
       log(e.getMessage());
     }
 
+    reportDuplicates(result);
+    return result;
+  }
+
+  private List<ColumnInfo> getColumns(Table t) {
+    List<ColumnInfo> columns = new ArrayList<ColumnInfo>();
+    for (Column c : t.getColumns())
+      columns.add(new ColumnInfo(c.getName(), c.getType(), c.getKind()));
+    return columns;
+  }
+
+  private void reportDuplicates(ArrayList<TableInfo> result) {
     String fuckedUp = "";
     tableNamesToIds.clear();
     for (TableInfo i : result) {
@@ -111,18 +139,16 @@ public class FusionTablesConnector implements Connector {
         fuckedUp = fuckedUp + "ambiguous table name '" + i.name + "'\r\n";
       tableNamesToIds.put(i.name, i.id);
 
-      
+
     }
     if (fuckedUp.length() > 0) {
-      log( "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
+      log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n"
           + " ambiguous table names found (one name for more than one table ID)."
           + " Name to ID replacement has a good chance to produce \r\n"
           + " invalid queries if those tables are involved. \r\n"
           + " Better to change the name, a separate one per table. \r\n"
           + "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n" + fuckedUp);
     }
-    
-    return result;
   }
 
   @Override

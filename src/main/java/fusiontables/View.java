@@ -14,7 +14,7 @@
 
 package fusiontables;
 
-import interfeces.TableInfo;
+import interfacing.TableInfo;
 
 /**
  * Utility methods to print to the command line.
