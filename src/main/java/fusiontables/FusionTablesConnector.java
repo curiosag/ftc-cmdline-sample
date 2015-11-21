@@ -59,6 +59,7 @@ public class FusionTablesConnector implements Connector {
 
     String authInfoJSon =
         "{\"installed\":{\"client_id\":\"%s\",\"auth_uri\":\"https://accounts.google.com/o/oauth2/auth\",\"token_uri\":\"https://accounts.google.com/o/oauth2/token\",\"auth_provider_x509_cert_url\":\"https://www.googleapis.com/oauth2/v1/certs\",\"client_secret\":\"%s\",\"redirect_uris\":[\"urn:ietf:wg:oauth:2.0:oob\",\"http://localhost\"]}}";
+    
     try {
 
       httpTransport = GoogleNetHttpTransport.newTrustedTransport();
@@ -146,14 +147,9 @@ public class FusionTablesConnector implements Connector {
           + " ambiguous table names found (one name for more than one table ID)."
           + " Name to ID replacement has a good chance to produce \r\n"
           + " invalid queries if those tables are involved. \r\n"
-          + " Better to change the name, a separate one per table. \r\n"
+          + " Better to change names, a unique one for each table. \r\n"
           + "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\r\n" + fuckedUp);
     }
-  }
-
-  @Override
-  public Map<String, String> getTableNameToIdMap() {
-    return tableNamesToIds;
   }
 
   @Override
