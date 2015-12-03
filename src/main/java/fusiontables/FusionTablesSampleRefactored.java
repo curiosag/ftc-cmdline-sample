@@ -4,7 +4,7 @@ import com.google.api.client.util.DateTime;
 import com.google.common.base.Optional;
 
 import cg.common.core.SystemLogger;
-import interfacing.TableInfo;
+import structures.TableInfo;
 
 import java.io.IOException;
 import java.util.Date;

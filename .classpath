@@ -23,11 +23,6 @@
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/JavaCommon"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/ftcSql"/>
-	<classpathentry kind="src" output="target/test-classes" path="src/test/java">
-		<attributes>
-			<attribute name="optional" value="true"/>
-			<attribute name="maven.pomderived" value="true"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/ftcShared"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

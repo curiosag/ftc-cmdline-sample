@@ -21,9 +21,9 @@ import com.google.common.base.Optional;
 
 import cg.common.check.Check;
 import cg.common.core.Logging;
-import interfacing.ColumnInfo;
-import interfacing.Connector;
-import interfacing.TableInfo;
+import interfaces.Connector;
+import structures.ColumnInfo;
+import structures.TableInfo;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
